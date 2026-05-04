@@ -1,4 +1,0 @@
-# Ignore local VS Code settings and icon-generation scripts
-.vscode/
-assets/icons/create_icons.py
-assets/icons/create_product_icons.py
