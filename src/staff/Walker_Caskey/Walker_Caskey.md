@@ -1,7 +1,7 @@
 ![Walker M. Caskey](bin/headshot.jpg)
 
 # Walker Caskey
-**Position:** Founder & Director of D5i
+**Position:** Founder & Director
 **Skills / Focus:** DevSecOps, Cybersecurity, Project Management
 **University:** UTSA — Undergrad · Cybersecurity & DevSecOps
 
