@@ -1,4 +1,4 @@
-/* bot.js — D5Bot, the site help assistant.
+/* bot.js — D5-DOG, the site help assistant.
    Self-contained on purpose: index.html does not load load.js, so nothing here
    may depend on it. Mounted by including:
 
@@ -15,7 +15,7 @@
     // d5dog.mp3 is normalised to -2 dBTP, so full volume is the intended
     // level. Drop this to ~0.5 for a more discreet bark.
     volume: 1.0,
-    panelTitle: 'D5Bot',
+    panelTitle: 'D5-DOG',
     openGreeting:
       "D5-DOG: Hi! I can help you find someone, or pass a message straight to the team. What do you need?",
     fallback:
@@ -60,7 +60,7 @@
      from most specific to most general. */
   var RULES = [
     { re: /\b(hi|hey|hello|yo|sup|howdy|good (morning|afternoon|evening))\b/i,
-      say: "Woof woof. I'm D5Bot — a small helper that lives in the corner of this site. Try \"services\", \"products\", \"team\", or \"contact\"." },
+      say: "Woof woof. I'm D5-DOG — a small helper that lives in the corner of this site. Try \"services\", \"products\", \"team\", or \"contact\"." },
 
     { re: /\b(service|services|consult|consulting|hire|hiring|work with you|freelance|contract|advisory)\b/i,
       say: "We do two things: architecture and security consulting, and full end-to-end product development. Rates are on request and we keep a limited number of slots open.",
@@ -104,7 +104,7 @@
     { re: /\b(thank|thanks|thx|cheers|appreciate|ta)\b/i,
       say: "Any time. Bark on if anything else comes up." },
 
-    { re: /\b(dog|d5dog|woof|bark|good (boy|girl)|puppy)\b/i,
+    { re: /\b(dog|d5[\s-]?dog|woof|bark|good (boy|girl)|puppy)\b/i,
       say: "Bark bark. That's me. I'm the clickable one — press me and I bark, that's the whole gimmick." },
 
     { re: /\b(help|how does this work|what can you do|commands|options)\b/i,
@@ -121,10 +121,20 @@
   /* ── Audio ─────────────────────────────────────────────────────
      Sound is ON by default. Only an explicit stored '0' turns it off, so a
      corrupt or legacy value can never leave the bot permanently silent. */
-  var SOUND_KEY = 'd5bot-sound';
+  var SOUND_KEY = 'd5dog-sound';
+  var SOUND_KEY_LEGACY = 'd5bot-sound';
   var soundOn = true;
   try {
     var stored = window.localStorage.getItem(SOUND_KEY);
+    if (stored === null) {
+      // One-time carry-over from the pre-rename key, so returning visitors
+      // do not silently get their sound preference reset.
+      stored = window.localStorage.getItem(SOUND_KEY_LEGACY);
+      if (stored !== null) {
+        window.localStorage.setItem(SOUND_KEY, stored);
+        window.localStorage.removeItem(SOUND_KEY_LEGACY);
+      }
+    }
     if (stored !== null) soundOn = stored !== '0';
   } catch (e) {}
 
@@ -147,47 +157,47 @@
   /* ── Build ──────────────────────────────────────────────────── */
   function build() {
     var root = document.createElement('div');
-    root.className = 'd5bot';
+    root.className = 'd5dog';
     root.innerHTML = [
-      '<div class="d5bot-panel" id="d5bot-panel" role="dialog" aria-modal="false" aria-label="' + esc(CONFIG.panelTitle) + '">',
-      '  <div class="d5bot-head">',
+      '<div class="d5dog-panel" id="d5dog-panel" role="dialog" aria-modal="false" aria-label="' + esc(CONFIG.panelTitle) + '">',
+      '  <div class="d5dog-head">',
       '    <strong>' + esc(CONFIG.panelTitle) + '</strong>',
-      '    <span class="d5bot-status">online</span>',
-      '    <button type="button" class="d5bot-close" aria-label="Close help assistant">&times;</button>',
+      '    <span class="d5dog-status">online</span>',
+      '    <button type="button" class="d5dog-close" aria-label="Close D5-DOG">&times;</button>',
       '  </div>',
-      '  <div class="d5bot-log" id="d5bot-log" aria-live="polite"></div>',
-      '  <div class="d5bot-opts" id="d5bot-opts"></div>',
-      '  <form class="d5bot-form" id="d5bot-form">',
-      '    <label for="d5bot-q" class="visually-hidden">Ask D5Bot a question</label>',
-      '    <input id="d5bot-q" type="text" placeholder="ask something…" autocomplete="off">',
+      '  <div class="d5dog-log" id="d5dog-log" aria-live="polite"></div>',
+      '  <div class="d5dog-opts" id="d5dog-opts"></div>',
+      '  <form class="d5dog-form" id="d5dog-form">',
+      '    <label for="d5dog-q" class="visually-hidden">Ask D5-DOG a question</label>',
+      '    <input id="d5dog-q" type="text" placeholder="ask something…" autocomplete="off">',
       '    <button type="submit">Send</button>',
       '  </form>',
-      '  <div class="d5bot-foot">',
-      '    <label for="d5bot-sound"><input type="checkbox" id="d5bot-sound"> sound on</label>',
-      '    <span class="d5bot-hint">esc to close</span>',
+      '  <div class="d5dog-foot">',
+      '    <label for="d5dog-sound"><input type="checkbox" id="d5dog-sound"> sound on</label>',
+      '    <span class="d5dog-hint">esc to close</span>',
       '  </div>',
       '</div>',
-      '<button type="button" class="d5bot-btn" id="d5bot-btn" aria-expanded="false" aria-controls="d5bot-panel" aria-label="Open help assistant ' + esc(CONFIG.panelTitle) + '">',
+      '<button type="button" class="d5dog-btn" id="d5dog-btn" aria-expanded="false" aria-controls="d5dog-panel" aria-label="Open help assistant ' + esc(CONFIG.panelTitle) + '">',
       '  <img src="' + esc(asset('d5dog-idle-512.gif')) + '" alt="" width="76" height="76" draggable="false">',
       '</div>'
     ].join('');
     document.body.appendChild(root);
 
-    var btn = root.querySelector('#d5bot-btn');
-    var panel = root.querySelector('#d5bot-panel');
-    var log = root.querySelector('#d5bot-log');
-    var opts = root.querySelector('#d5bot-opts');
-    var form = root.querySelector('#d5bot-form');
-    var input = root.querySelector('#d5bot-q');
-    var soundBox = root.querySelector('#d5bot-sound');
-    var closeBtn = root.querySelector('.d5bot-close');
+    var btn = root.querySelector('#d5dog-btn');
+    var panel = root.querySelector('#d5dog-panel');
+    var log = root.querySelector('#d5dog-log');
+    var opts = root.querySelector('#d5dog-opts');
+    var form = root.querySelector('#d5dog-form');
+    var input = root.querySelector('#d5dog-q');
+    var soundBox = root.querySelector('#d5dog-sound');
+    var closeBtn = root.querySelector('.d5dog-close');
 
     soundBox.checked = soundOn;
 
     /* message log */
     function say(text, who) {
       var el = document.createElement('div');
-      el.className = 'd5bot-msg ' + (who === 'me' ? 'd5bot-me' : 'd5bot-them');
+      el.className = 'd5dog-msg ' + (who === 'me' ? 'd5dog-me' : 'd5dog-them');
       // text is either a CONFIG string or a RULE-authored string; escape it
       el.textContent = text;
       log.appendChild(el);
@@ -218,7 +228,7 @@
           'Hi D5i team,\n\nSomething is broken:\n\n\n\nPage: ' + url + '\n');
       } else if (kind === 'handoff') {
         window.location.href = mailto('D5-Interactive — question from ' + pageName(),
-          'Hi D5i team,\n\nI asked D5Bot: "' + (lastQuestion || '') + '"\n\n\n\n(seen on: ' + url + ')\n');
+          'Hi D5i team,\n\nI asked D5-DOG: "' + (lastQuestion || '') + '"\n\n\n\n(seen on: ' + url + ')\n');
       }
     }
 
@@ -233,7 +243,7 @@
         seen[it.label] = 1;
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = 'd5bot-opt';
+        b.className = 'd5dog-opt';
         b.textContent = it.label;
         b.addEventListener('click', function () {
           say(it.label, 'me');
@@ -319,7 +329,7 @@
   }
 
   function init() {
-    if (document.querySelector('.d5bot')) return;  // already mounted
+    if (document.querySelector('.d5dog')) return;  // already mounted
     build();
   }
 

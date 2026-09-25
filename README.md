@@ -16,10 +16,10 @@ src/staff/<First_Last>/     one folder per member
     bin/                    optional media (headshot lives here)
 src/products/ src/services/ same pattern
 src/css/style.css           site styling
-src/css/bot.css             D5Bot widget
+src/css/bot.css             D5-DOG widget
 src/js/load.js              markdown loader
-src/js/bot.js               D5Bot behaviour
-src/bin/                    favicon, D5Bot sprite + bark
+src/js/bot.js               D5-DOG behaviour
+src/bin/                    favicon, D5-DOG sprite + bark
 ```
 
 ## Adding content
@@ -40,7 +40,7 @@ Copy the `_template` from `services/`, `products/`, or `staff/`. Name the folder
   `**University:**`. `Position` is shown on the card; if absent, `Teams` is used instead.
   `Teams` renders as chips and is comma-separated.
 
-## D5Bot
+## D5-DOG
 
 The help assistant in the bottom-right corner. Click the dog for the bark.
 
