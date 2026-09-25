@@ -1,5 +1,3 @@
-![Walker M. Caskey](bin/headshot.jpg)
-
 # Walker Caskey
 **Position:** Founder & Director
 **Skills / Focus:** DevSecOps, Cybersecurity, Project Management

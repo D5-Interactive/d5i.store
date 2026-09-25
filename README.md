@@ -22,6 +22,18 @@ src/js/bot.js               D5-DOG behaviour
 src/bin/                    favicon, D5-DOG sprite + bark
 ```
 
+## Performance notes
+
+The staff grid paints **twice**. The first paint happens off the manifest alone,
+turning folder names into display names, so names are on screen in about 150 ms
+without waiting for a single markdown file. The 24 member files then fetch in
+parallel and repaint with teams, roles, and headshots. Fetching them one at a time
+instead cost roughly 3.5 s of pure latency, which is what the "loading…" used to
+feel like. Product and service cards use the same parallel fetch.
+
+The heaviest asset on the page is the Bootstrap CSS/JS from the CDN (~486 KB
+transferred), not the site's own content.
+
 ## Adding content
 
 Copy the `_template` from `services/`, `products/`, or `staff/`. Name the folder and the
@@ -35,7 +47,8 @@ Copy the `_template` from `services/`, `products/`, or `staff/`. Name the folder
 - Headshots go in `src/staff/First_Last/bin/` and are referenced from the `.md` as
   `![Name](bin/headshot.jpg)`. Paths are resolved relative to the `.md`, not the page.
   **Members with no headshot fall back to a generated initials avatar automatically**,
-  so nothing is required.
+  so nothing is required — but do not reference a headshot that does not exist, or
+  every visit to the staff page logs a 404.
 - Recognised fields: `**Position:**`, `**Nickname:**`, `**Teams:**`, `**Skills / Focus:**`,
   `**University:**`. `Position` is shown on the card; if absent, `Teams` is used instead.
   `Teams` renders as chips and is comma-separated.
@@ -114,7 +127,9 @@ stored vectors, so regenerate when you change.
 
 ## D5-DOG
 
-The help assistant in the bottom-right corner. Click the dog for the bark.
+The help assistant in the bottom-right corner. Click the dog for the bark; it also
+barks when you send it a message or pick a menu option. The checkbox in the panel
+footer mutes it and the choice persists.
 
 To change the contact address, reply text, or FAQ answers, edit the `CONFIG` block at the
 top of `src/js/bot.js` — that plus the `RULES` array is the whole thing. Contact and

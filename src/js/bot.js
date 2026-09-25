@@ -261,6 +261,7 @@
         b.className = 'd5dog-opt';
         b.textContent = it.label;
         b.addEventListener('click', function () {
+          bark();
           say(it.label, 'me');
           if (it.action) { act(it.action); return; }
           window.location.href = it.href;
@@ -334,6 +335,10 @@
     function answer(raw) {
       lastQuestion = raw;
       say(raw, 'me');
+      /* One bark per turn, fired as soon as the message is accepted rather
+         than after the answer resolves — so a slow lookup still gets instant
+         audio confirmation that D5-DOG heard you. */
+      bark();
       var rule = matchRule(raw);
       if (LOCATOR.test(raw)) {
         lookup(raw).then(function (hit) {

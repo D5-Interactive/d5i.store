@@ -169,6 +169,14 @@ textarea:focus-visible,
   opacity:.7;
 }
 .hero{padding:1rem 0 2rem;border-bottom:1px solid #000;margin-bottom:2rem}
+.hero-mark{
+  display:block;
+  width:112px;
+  height:112px;
+  object-fit:contain;
+  margin-bottom:1rem;
+  animation:d5-rise .5s cubic-bezier(.2,.7,.3,1) both;
+}
 .hero p{margin-top:1rem;max-width:540px;font-size:1.1rem}
 
 /* ── INNER PAGES ── */
@@ -294,3 +302,8 @@ main > *, .hero, .page-head, .tile, .staff-card, .card{
   body::after{background-position:0% 0%,0% 0%,0% 0%,0% 0%,0% 0%}
   .staff-card:hover,.tile:hover,.card:hover{transform:none}
 }
+
+/* Staff grid first paint, drawn from the manifest before the member
+   markdown arrives. Same box, so nothing shifts when the real data lands. */
+.staff-card.is-pending{ opacity:.55 }
+.staff-card.is-pending .staff-card-img{ background:#f0f0ee }
