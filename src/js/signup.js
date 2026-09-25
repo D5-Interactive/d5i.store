@@ -24,7 +24,7 @@
     email: 'd5int.sp@gmail.com',
     // e.g. 'https://formspree.io/f/xxxx' — leave '' to use mailto:
     endpoint: '',
-    subject: 'StarSec signup — Rowdy CyberCon, Nov 7 2026',
+    subject: 'StarSec signup — Rowdy CyberCon, Nov 6-7 2026',
     // Shown in the confirmation panel
     thanks: "You're on the list.",
     /* Validates a UTSA address. Set to null to allow any email domain. */

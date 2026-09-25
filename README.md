@@ -43,7 +43,8 @@ Copy the `_template` from `services/`, `products/`, or `staff/`. Name the folder
 ## StarSec signup
 
 `src/pages/STARSEC-SIGNUP.html` is the competition signup for StarSec at Rowdy
-CyberCon (November 7, 2026). It is a per-person form: each entrant signs up once
+CyberCon (November 6-7, 2026: team training on the Friday, competition on the
+Saturday, both at SP1 on the UTSA Downtown Campus). It is a per-person form: each entrant signs up once
 and picks Captain or Operator.
 
 **To add, edit or remove a question, change only the `FIELDS` array at the top of
