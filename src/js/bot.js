@@ -21,7 +21,6 @@
   };
 
   var BASE = (typeof window.D5I_BOT_BASE === 'string') ? window.D5I_BOT_BASE : '';
-  var MUTE_KEY = 'd5bot-muted';
 
   function asset(p) { return BASE + 'src/bin/d5dog/' + p; }
 
@@ -117,13 +116,19 @@
     return null;
   }
 
-  /* ── Audio ───────────────────────────────────────────────────── */
-  var muted = false;
-  try { muted = window.localStorage.getItem(MUTE_KEY) === '1'; } catch (e) {}
+  /* ── Audio ─────────────────────────────────────────────────────
+     Sound is ON by default. Only an explicit stored '0' turns it off, so a
+     corrupt or legacy value can never leave the bot permanently silent. */
+  var SOUND_KEY = 'd5bot-sound';
+  var soundOn = true;
+  try {
+    var stored = window.localStorage.getItem(SOUND_KEY);
+    if (stored !== null) soundOn = stored !== '0';
+  } catch (e) {}
 
   var audio = null;
   function bark() {
-    if (muted) return;
+    if (!soundOn) return;
     try {
       if (!audio) {
         audio = new Audio(asset('d5dog.mp3'));
@@ -156,7 +161,7 @@
       '    <button type="submit">Send</button>',
       '  </form>',
       '  <div class="d5bot-foot">',
-      '    <label for="d5bot-mute"><input type="checkbox" id="d5bot-mute"> sound</label>',
+      '    <label for="d5bot-sound"><input type="checkbox" id="d5bot-sound"> sound on</label>',
       '    <span class="d5bot-hint">esc to close</span>',
       '  </div>',
       '</div>',
@@ -172,10 +177,10 @@
     var opts = root.querySelector('#d5bot-opts');
     var form = root.querySelector('#d5bot-form');
     var input = root.querySelector('#d5bot-q');
-    var muteBox = root.querySelector('#d5bot-mute');
+    var soundBox = root.querySelector('#d5bot-sound');
     var closeBtn = root.querySelector('.d5bot-close');
 
-    muteBox.checked = muted;
+    soundBox.checked = soundOn;
 
     /* message log */
     function say(text, who) {
@@ -305,9 +310,9 @@
       answer(v);
     });
 
-    muteBox.addEventListener('change', function () {
-      muted = muteBox.checked;
-      try { window.localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
+    soundBox.addEventListener('change', function () {
+      soundOn = soundBox.checked;
+      try { window.localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (e) {}
     });
   }
 
