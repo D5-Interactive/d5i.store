@@ -62,6 +62,56 @@ the fallback for anyone whose device has no mail client configured.
 UTSA addresses are validated to end in `@utsa.edu`; set `CONFIG.emailDomain` to
 `null` to accept any domain.
 
+## D5-DOG "where is X?" lookup
+
+Ask D5-DOG "where is walker caskey", "where is the debug tool", or "who is on
+the hardware team" and it resolves against `src/data/search-index.json`, which
+holds one record per staff member, page, product, service, blog post and paper.
+
+`src/js/tern.js` runs three stages, in order, because they fail differently:
+
+1. **Lexical** — exact names, name fragments, aliases, team names. Instant,
+   offline, deterministic. Answers the large majority of real queries.
+2. **Edit distance** — typos, up to 2 characters. Also free.
+3. **Semantic** — [Ternlight](https://github.com/soycaporal/ternlight) mini
+   (`@ternlight/mini`, MIT), vendored in `src/bin/ternlight/`. 4.8 MB gzipped,
+   384-dim, L2-normalized, ~1.7 ms per embedding on CPU.
+
+**The 4.8 MB model is only downloaded if stages 1 and 2 come up empty.** Nothing
+extra is fetched on page load, and opening the panel does not trigger it either.
+
+### Why the model is a fallback and not the main path
+
+Measured, not assumed. Given only the model, "where is walker caskey" ranked
+Walker's *blog post* above his *staff profile*; a naive lexical+semantic blend
+scored **9/15** where lexical alone scored **11/15**, because semantic kept
+overturning confident name matches. The model also cannot handle typos here:
+"where is walkr casky" put Walker Caskey 4th at cosine 0.163, while pure
+gibberish reached 0.266 — a correct answer sitting *below* the noise floor, so
+no threshold separates them. Edit distance fixes that for free.
+
+The semantic stage is therefore only trusted when it is clearly ahead:
+`threshold` 0.29 and `minMargin` 0.045, both set from measurements. Across 12
+paraphrase probes, correct answers scored a margin of 0.060–0.247 and wrong
+ones 0.003–0.027. Anything thinner falls through to the human handoff rather
+than showing a shaky answer as fact.
+
+If the wasm fails to load — offline, blocked, old browser — stages 1 and 2 keep
+working and the bot simply loses fuzzy matching. No error is thrown.
+
+### Regenerating the index
+
+Vectors are precomputed at build time so the browser only ever embeds the
+visitor's query. After adding staff, a product, or a post:
+
+```bash
+npm install --no-save @ternlight/mini
+node scripts/build-search-index.mjs
+```
+
+Use the same tier you ship. Switching between `mini` and `base` invalidates the
+stored vectors, so regenerate when you change.
+
 ## D5-DOG
 
 The help assistant in the bottom-right corner. Click the dog for the bark.

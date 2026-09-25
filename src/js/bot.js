@@ -68,12 +68,17 @@
 
     // Signup questions must be tested before the product rule, since both
     // match on "starsec" and the visitor almost always means the event.
-    { re: /\b(where|venue|location|address|where is|where'?s|how do i (get|find)|directions|which campus|downtown|san ?pedro|sp1|weston)\b/i,
+    // Deliberately narrow. An earlier version included a bare \bwhere\b and
+    // "how do i find", which meant "where is walker caskey" and "where do I
+    // find derek wei" were answered with the venue instead of reaching the
+    // name lookup — the exact queries this bot exists for. Location now
+    // requires a location word or an explicit "get there".
+    { re: /\b(venue|venues|location|locations|address|addresses|directions?|downtown|san ?pedro|sp1|weston|campus|building|room|floor)\b|where(?:'s| is)? (?:it|that|the (?:event|competition|showcase|cyber ?con|sign ?up))\b|how (?:do|can) i get there\b|getting there\b/i,
       say: "It's at the Weston Conference Center on the UTSA Downtown Campus, in SP1 (San Pedro 1). The signup form has a Maps link so you can route to it.",
       link: { text: 'See venue and sign up', href: BASE + 'src/pages/STARSEC-SIGNUP.html' } },
 
     { re: /\b(sign ?up|signing|register|registration|compete|competing|competition|comp|tournament|showcase|train(ing)?|rowdy|cyber ?con|cybercon|cyber jedis|jedis|captain|operator|nov(ember)? ?6|nov(ember)? ?7|nov(ember)? ?6.?7)\b/i,
-      say: "StarSec is running a cyber competition showcase at Rowdy CyberCon, November 6-7. Friday the 6th is team training, Saturday the 7th is the competition, both at the Weston Conference Center on the UTSA Downtown Campus (SP1 / San Pedro 1). The signup form is short — name, the role you want (Captain or Operator), experience level, and your details. It lands in a real inbox.",
+      say: "StarSec is running a cyber competition showcase at Rowdy CyberCon, November 6-7. Friday the 6th is team training and Saturday the 7th is the competition — both days are required — at the Weston Conference Center on the UTSA Downtown Campus (SP1 / San Pedro 1). The signup form is short — name, the role you want (Captain or Operator), experience level, and your details. It lands in a real inbox.",
       link: { text: 'Open the signup form', href: BASE + 'src/pages/STARSEC-SIGNUP.html' } },
 
     { re: /\b(product|products|tool|tools|ship|thing(s)? you (made|build)|starsec|dbgc|star sec|debug commander|cli)\b/i,
@@ -268,22 +273,81 @@
 
     var lastQuestion = '';
 
+    /* ── "where is X?" lookup ────────────────────────────────────
+     * Runs only after the rule table has declined, so the common
+     * cases still cost nothing. Internally this is three stages —
+     * name/alias matching, then edit distance for typos, then a
+     * ~4.8 MB on-device embedding model — and only the last one
+     * costs a download. If the model can't load, this quietly
+     * returns null and we fall through to the human handoff. */
+    function lookup(raw) {
+      var T = (typeof window !== 'undefined' ? window : globalThis).D5Tern;
+      if (!T || typeof T.resolve !== 'function') return Promise.resolve(null);
+      var thinking = say('…looking that up');
+      thinking.classList.add('is-pending');
+      return T.resolve(raw).then(function (hit) {
+        thinking.remove();
+        return hit;
+      }, function () {
+        thinking.remove();
+        return null;
+      });
+    }
+
+    /* A "where is X / find X / who is X" question is a lookup, so it goes
+     * to the resolver before the rule table. Otherwise "where is the debug
+     * tool" got the generic products blurb and "who is on the hardware
+     * team" got the generic roster blurb, when a specific answer was
+     * sitting in the index. Rules still get first refusal on everything
+     * else, and still act as the fallback if the resolver comes up empty. */
+    var LOCATOR = /\b(where|find|locate|look for|show me|who)\b/i;
+
+    function renderRule(rule) {
+      var text = typeof rule.say === 'function' ? rule.say() : rule.say;
+      sayWithLink(text, rule.link);
+      if (rule.action) {
+        var labels = { contact: 'Contact us', suggest: 'Leave a suggestion', bug: 'Report a broken page' };
+        renderOptions([{ label: labels[rule.action], action: rule.action }]);
+      } else {
+        defaultOptions();
+      }
+    }
+
+    function renderHit(hit) {
+      var link = null;
+      if (hit.href) {
+        var label = hit.kind === 'team' ? 'Open the staff page'
+          : hit.kind === 'staff' ? 'Open their profile'
+          : hit.kind === 'page' ? 'Open that page'
+          : 'Open the ' + hit.kind + ' page';
+        link = { text: label, href: hit.href };
+      }
+      sayWithLink(hit.answer, link);
+      defaultOptions();
+    }
+
+    function renderFallback() {
+      sayWithLink(CONFIG.fallback);
+      renderOptions([{ label: 'Ask a human', action: 'handoff' }]);
+    }
+
     function answer(raw) {
       lastQuestion = raw;
       say(raw, 'me');
       var rule = matchRule(raw);
-      if (rule) {
-        var text = typeof rule.say === 'function' ? rule.say() : rule.say;
-        sayWithLink(text, rule.link);
-        if (rule.action) {
-          var labels = { contact: 'Contact us', suggest: 'Leave a suggestion', bug: 'Report a broken page' };
-          renderOptions([{ label: labels[rule.action], action: rule.action }]);
-        } else {
-          defaultOptions();
-        }
+      if (LOCATOR.test(raw)) {
+        lookup(raw).then(function (hit) {
+          if (hit) renderHit(hit);
+          else if (rule) renderRule(rule);
+          else renderFallback();
+        });
+      } else if (rule) {
+        renderRule(rule);
       } else {
-        sayWithLink(CONFIG.fallback);
-        renderOptions([{ label: 'Ask a human', action: 'handoff' }]);
+        lookup(raw).then(function (hit) {
+          if (hit) renderHit(hit);
+          else renderFallback();
+        });
       }
     }
 

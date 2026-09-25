@@ -169,3 +169,18 @@ select.sf-control{
   .sf-submit,.sf-copy,.sf-done{transition:none;animation:none}
   .sf-submit:hover{transform:none}
 }
+
+/* "required" flag beside an event day */
+.ev-req{
+  display:inline-block;
+  border:1px solid #000;
+  background:#000;
+  color:#fff;
+  font-size:.58rem;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  padding:1px .35rem;
+  vertical-align:.12em;
+  white-space:nowrap;
+}

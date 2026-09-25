@@ -227,3 +227,16 @@
   .d5dog-btn,
   .d5dog-btn.is-barking{ transition: none; animation: none; }
 }
+
+/* ── "where is X?" lookup ────────────────────────────────── */
+.d5dog-msg.is-pending{
+  opacity:.55;
+  font-style:italic;
+}
+.d5dog-msg.is-pending::after{
+  content:'';
+  display:inline-block;
+  width:.5em;
+  animation:d5bot-blink 1s steps(2,start) infinite;
+}
+@keyframes d5dog-blink{to{opacity:0}}

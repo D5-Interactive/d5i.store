@@ -3,4 +3,8 @@
 # stay untracked. It is the working copy only.
 src/staff/_roster.local.json
 
+# Only needed to regenerate src/data/search-index.json; see README.
+# The runtime uses the vendored engine in src/bin/ternlight/, not this.
+node_modules/
+
 .DS_Store
