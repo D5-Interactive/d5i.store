@@ -3,28 +3,69 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:#000;color:#fff}
 
+:root{
+  --d5-accent:#000;
+  --d5-ink:#000;
+  --d5-paper:#fff;
+  --d5-line:rgba(0,0,0,.16);
+}
+
 body{
   font:15px/1.65 "Courier New",Courier,monospace;
-  color:#000;
+  color:var(--d5-ink);
   max-width:1100px;
   margin:0 auto;
   padding:2rem 1rem;
   position: relative;
-  /* Flowing gradient background */
-  background: #fffff
+  min-height:100vh;
+  /* Base tone under the moving gradient layer. Previously `#fffff`,
+     which is not a valid colour and killed the whole background stack. */
+  background:#f4f4f2;
 }
 
-/* Semi‑transparent white overlay to keep text readable */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.88);
-  pointer-events: none;
-  z-index: -1;
+/* Flowing mesh gradient — three drifting radial fields.
+   Driven by background-position on oversized gradients, which is far
+   cheaper than animating blurred elements or re-laying out the page. */
+body::after{
+  content:'';
+  position:fixed;
+  inset:-25%;
+  z-index:-2;
+  background:
+    radial-gradient(38% 42% at 22% 28%, rgba(0,0,0,.16) 0%, transparent 62%),
+    radial-gradient(34% 38% at 78% 22%, rgba(0,0,0,.11) 0%, transparent 60%),
+    radial-gradient(44% 46% at 62% 82%, rgba(0,0,0,.13) 0%, transparent 64%),
+    radial-gradient(30% 34% at 12% 78%, rgba(0,0,0,.10) 0%, transparent 58%),
+    linear-gradient(120deg,#e9e9e6 0%,#f6f6f4 50%,#ececea 100%);
+  background-size:180% 180%;
+  animation:d5-drift 34s ease-in-out infinite;
+  pointer-events:none;
+  will-change:background-position;
+}
+@keyframes d5-drift{
+  0%,100%{ background-position:0% 0%,0% 0%,0% 0%,0% 0%,0% 0% }
+  33%    { background-position:38% 26%,18% 52%,62% 8%,30% 40%,12% 22% }
+  66%    { background-position:70% 62%,58% 14%,22% 70%,66% 22%,42% 68% }
+}
+
+/* Semi-transparent white overlay to keep text readable */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,.82);
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* Film grain — inline SVG turbulence, so texture costs no request. */
+.grain{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Ensure content sits above the overlay */
@@ -46,20 +87,55 @@ em{font-style:italic}
 ul{margin:.3rem 0 .3rem 1.2rem}
 li{margin:.1rem 0}
 
+/* ── FOCUS (the site previously had no focus style at all) ──
+   !important is deliberate: Bootstrap ships `.nav-link:focus-visible{outline:0}`
+   at specificity (0,2,0), which beats a plain `a:focus-visible` at (0,1,2)
+   regardless of stylesheet order. A focus ring must not be suppressible. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible{
+  outline:3px solid var(--d5-ink) !important;
+  outline-offset:3px !important;
+}
+
 /* ── NAVBAR (brutalist twist) ── */
 .navbar{
   border-top:4px solid #000;
   border-bottom:1px solid #000;
   padding:.6rem 0;
   margin-bottom:2.5rem;
+  position:sticky;
+  top:0;
+  z-index:1030;
+  background:rgba(255,255,255,.88);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
 }
 .navbar-brand{font-weight:900;letter-spacing:-.02em;font-size:1.8rem}
+.navbar-brand:hover{text-decoration:none;opacity:.6}
 .nav-link{
   font-weight:700;
   font-size:.72rem;
   letter-spacing:.18em;
   text-transform:uppercase;
+  position:relative;
 }
+.nav-link::after{
+  content:'';
+  position:absolute;
+  left:0;right:0;bottom:-2px;
+  height:2px;
+  background:currentColor;
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:transform .18s ease;
+}
+.nav-link:hover{text-decoration:none}
+.nav-link:hover::after{transform:scaleX(1)}
+.nav-link.active::after{transform:scaleX(1)}
 .nav-link.active::before{content:"> "}
 .navbar-toggler{border:1px solid #000;border-radius:0;padding:.25rem .6rem}
 
@@ -73,12 +149,15 @@ li{margin:.1rem 0}
   font-weight:800;
   font-size:1.5rem;
   text-transform:uppercase;
-  transition:all 0.1s ease;
+  box-shadow:0 0 0 #000;
+  transition:box-shadow .14s ease, transform .14s ease, background .14s ease, color .14s ease;
 }
 .tile:hover{
   background:#000;
   color:#fff;
   text-decoration:none;
+  transform:translate(-3px,-3px);
+  box-shadow:6px 6px 0 #000;
 }
 .tile span{
   display:block;
@@ -102,18 +181,70 @@ li{margin:.1rem 0}
   border:1px solid #000 !important;
   border-radius:0 !important;
   box-shadow:none !important;
-  transition:0.1s linear;
+  transition:box-shadow .14s ease, transform .14s ease;
 }
-.card:hover{background:#fafafa}
+.card:hover{
+  background:#fafafa;
+  transform:translate(-2px,-2px);
+  box-shadow:4px 4px 0 rgba(0,0,0,.9) !important;
+}
 .card img{
   border:1px solid #ddd;
   max-width:100%;
   height:auto;
 }
 
+/* ── STAFF GRID ── */
+.staff-card{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  background:#fff;
+  border:1px solid #000;
+  box-shadow:0 0 0 #000;
+  overflow:hidden;
+  transition:box-shadow .14s ease, transform .14s ease, background .14s ease;
+}
+.staff-card:hover{
+  text-decoration:none;
+  background:#fafafa;
+  transform:translate(-3px,-3px);
+  box-shadow:6px 6px 0 #000;
+}
+.staff-card-img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  display:block;
+  border-bottom:1px solid #000;
+  background:#eee;
+}
+.staff-card-body{padding:.7rem .75rem .8rem;display:flex;flex-direction:column;gap:.45rem;flex:1 1 auto}
+.staff-card-name{
+  font-size:.85rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin:0;
+  line-height:1.25;
+}
+.staff-card-role{font-size:.7rem;opacity:.6;margin:0;letter-spacing:.06em}
+.staff-card-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:auto}
+.d5tag{
+  display:inline-block;
+  border:1px solid var(--d5-line);
+  background:#f6f6f4;
+  padding:1px .3rem;
+  font-size:.58rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#333;
+  white-space:nowrap;
+}
+
 /* Preview cards for staff detail */
 .preview-card {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 .preview-card:hover {
   transform: translateY(-2px);
@@ -132,4 +263,34 @@ footer{
   font-size:.7rem;
   text-transform:uppercase;
   letter-spacing:.1em;
+}
+footer a{text-decoration:underline}
+
+/* ── ENTRANCE ── */
+@keyframes d5-rise{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+main > *, .hero, .page-head, .tile, .staff-card, .card{
+  animation:d5-rise .5s cubic-bezier(.2,.7,.3,1) both;
+}
+.row > [class*="col"]{animation:d5-rise .5s cubic-bezier(.2,.7,.3,1) both}
+.row > [class*="col"]:nth-child(1){animation-delay:.02s}
+.row > [class*="col"]:nth-child(2){animation-delay:.06s}
+.row > [class*="col"]:nth-child(3){animation-delay:.1s}
+.row > [class*="col"]:nth-child(4){animation-delay:.14s}
+.row > [class*="col"]:nth-child(5){animation-delay:.18s}
+.row > [class*="col"]:nth-child(6){animation-delay:.22s}
+.row > [class*="col"]:nth-child(n+7){animation-delay:.26s}
+
+/* ── REDUCED MOTION ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  body::after{background-position:0% 0%,0% 0%,0% 0%,0% 0%,0% 0%}
+  .staff-card:hover,.tile:hover,.card:hover{transform:none}
 }

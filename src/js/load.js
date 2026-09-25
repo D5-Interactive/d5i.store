@@ -1,12 +1,20 @@
 /* load.js — complete version with preview cards and modal */
 
-function md(raw) {
+/* Resolve a path found in a markdown file against that file's own URL, so
+   `bin/headshot.jpg` inside src/staff/Jane/Jane.md renders correctly even
+   though the page injecting it lives in a different directory. */
+function resolveAsset(path, baseUrl) {
+  if (!path || !baseUrl) return path;
+  try { return new URL(path, baseUrl).href; } catch (e) { return path; }
+}
+
+function md(raw, baseUrl) {
   let out = '', list = 0;
   const esc = s => s
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="img-fluid mb-3" style="border:1px solid #ccc">')
-    .replace(/\[video\]\((.*?)\)/g, '<div class="ratio ratio-16x9 my-2"><video controls src="$1"></video></div>')
-    .replace(/\[gif\]\((.*?)\)/g, '<img src="$1" alt="GIF" class="img-fluid">')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-decoration-none fw-semibold">$1</a>')
+    .replace(/!\[(.*?)\]\((.*?)\)/g, (m, alt, src) => `<img src="${resolveAsset(src, baseUrl)}" alt="${alt}" class="img-fluid mb-3" style="border:1px solid #ccc" onerror="this.onerror=null;this.src=initialsAvatar(this.alt)">`)
+    .replace(/\[video\]\((.*?)\)/g, (m, src) => `<div class="ratio ratio-16x9 my-2"><video controls src="${resolveAsset(src, baseUrl)}"></video></div>`)
+    .replace(/\[gif\]\((.*?)\)/g, (m, src) => `<img src="${resolveAsset(src, baseUrl)}" alt="GIF" class="img-fluid">`)
+    .replace(/\[(.+?)\]\((.+?)\)/g, (m, label, href) => `<a href="${href}" class="text-decoration-none fw-semibold">${label}</a>`)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
 
@@ -34,14 +42,48 @@ function md(raw) {
   return out;
 }
 
-function extractStaffMetadata(mdText) {
-  const imgMatch = mdText.match(/!\[.*?\]\((.*?)\)/);
-  const headshot = imgMatch ? imgMatch[1] : 'https://placehold.co/400x400?text=No+Image';
+/* ── Initials avatar ──────────────────────────────────────────────────
+   Drawn locally as an inline SVG so a member without a headshot never
+   costs a third-party image request. Shade is derived from the name so
+   the grid reads as varied rather than a wall of identical grey. */
+function initialsOf(name) {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function initialsAvatar(name, size) {
+  const initials = initialsOf(name);
+  let hash = 0;
+  for (const ch of String(name)) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+  const bg = `hsl(${hash} 28% 82%)`;
+  const fg = `hsl(${hash} 45% 22%)`;
+  const px = size || 400;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${px}" height="${px}">`
+    + `<rect width="100" height="100" fill="${bg}"/>`
+    + `<text x="50" y="50" fill="${fg}" font-family="Courier New,Courier,monospace" `
+    + `font-size="38" font-weight="700" text-anchor="middle" dominant-baseline="central">`
+    + `${initials}</text></svg>`;
+  // Apostrophes survive encodeURIComponent, which would break the inline
+  // onerror handlers that embed this string in a quoted attribute.
+  return 'data:image/svg+xml;charset=utf-8,'
+    + encodeURIComponent(svg).replace(/'/g, '%27');
+}
+
+function extractStaffMetadata(mdText, mdUrl) {
   const nameMatch = mdText.match(/^#\s+(.+)$/m);
   const name = nameMatch ? nameMatch[1].trim() : 'Staff Member';
+  const imgMatch = mdText.match(/!\[.*?\]\((.*?)\)/);
+  const headshot = imgMatch ? resolveAsset(imgMatch[1], mdUrl) : '';
   const roleMatch = mdText.match(/\*\*Position:\*\*\s*(.+)/);
-  const role = roleMatch ? roleMatch[1].trim() : '';
-  return { headshot, name, role };
+  const teamsMatch = mdText.match(/\*\*Teams:\*\*\s*(.+)/);
+  // Cards lead with Position, falling back to the member's team list.
+  const role = (roleMatch ? roleMatch[1].trim() : '') || (teamsMatch ? teamsMatch[1].trim() : '');
+  const teams = teamsMatch
+    ? teamsMatch[1].split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+  return { headshot, name, role, teams, initials: initialsAvatar(name) };
 }
 
 async function loadStaffIndex(manifestPath, basePath, element) {
@@ -55,25 +97,30 @@ async function loadStaffIndex(manifestPath, basePath, element) {
         const r = await fetch(basePath + f);
         if (!r.ok) throw new Error(`missing ${f}`);
         const text = await r.text();
-        const { headshot, name, role } = extractStaffMetadata(text);
+        const { headshot, name, role, teams, initials } = extractStaffMetadata(text, r.url);
         let memberSlug = f;
         if (memberSlug.includes('/')) memberSlug = memberSlug.split('/')[0];
         else memberSlug = memberSlug.replace(/\.md$/i, '');
-        items.push({ memberSlug, name, role, headshot });
+        items.push({ memberSlug, name, role, teams, headshot, initials });
       } catch (e) { console.warn(`failed ${f}:`, e); }
     }
     element.innerHTML = `
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         ${items.map(item => `
           <div class="col">
-            <div class="card h-100 border-0 shadow-none p-3" style="border:1px solid #000 !important; border-radius:0">
-              <img src="${item.headshot}" alt="${item.name}" class="img-fluid mb-3" style="aspect-ratio:1/1; object-fit:cover; border:1px solid #ccc">
-              <h3 class="h5 fw-bold">${escapeHtml(item.name)}</h3>
-              ${item.role ? `<p class="small text-muted">${escapeHtml(item.role)}</p>` : ''}
-              <div class="mt-3">
-                <a href="STAFF.html?member=${encodeURIComponent(item.memberSlug)}" class="btn btn-sm btn-outline-dark rounded-0 w-100">View profile →</a>
+            <a href="STAFF.html?member=${encodeURIComponent(item.memberSlug)}" class="staff-card">
+              <img src="${escapeHtml(item.headshot || item.initials)}"
+                   alt="${escapeHtml(item.name)}"
+                   class="staff-card-img"
+                   onerror="this.onerror=null;this.src='${item.initials}'"
+                   loading="lazy">
+              <div class="staff-card-body">
+                <h3 class="staff-card-name">${escapeHtml(item.name)}</h3>
+                ${item.teams.length
+                  ? `<div class="staff-card-tags">${item.teams.map(t => `<span class="d5tag">${escapeHtml(t)}</span>`).join('')}</div>`
+                  : (item.role ? `<p class="staff-card-role">${escapeHtml(item.role)}</p>` : '')}
               </div>
-            </div>
+            </a>
           </div>
         `).join('')}
       </div>
@@ -97,7 +144,7 @@ async function loadCards(manifestPath, basePath, element) {
         const r = await fetch(basePath + f);
         if (!r.ok) throw new Error(`missing ${f}`);
         const text = await r.text();
-        items.push({ file: f, html: md(text) });
+        items.push({ file: f, html: md(text, r.url) });
       } catch (e) {
         console.warn(`failed ${f}:`, e);
         items.push({ file: f, html: `<div class="alert alert-danger p-2 small">⚠️ could not load ${f}</div>` });
@@ -128,18 +175,19 @@ async function loadSingleStaffMember(basePath, memberFolder, element) {
     const resp = await fetch(mdPath);
     if (!resp.ok) throw new Error(`Staff file not found: ${mdPath}`);
     const text = await resp.text();
-    element.innerHTML = `<div class="mb-5 p-3" style="border-left:4px solid #000;">${md(text)}</div>`;
+    element.innerHTML = `<div class="mb-5 p-3 staff-bio" style="border-left:4px solid #000;">${md(text, resp.url)}</div>`;
   } catch (err) {
     element.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
   }
 }
 
 function escapeHtml(str) {
-  return str.replace(/[&<>]/g, function(m) {
+  return str.replace(/[&<>"']/g, function(m) {
     if (m === '&') return '&amp;';
     if (m === '<') return '&lt;';
     if (m === '>') return '&gt;';
-    return m;
+    if (m === '"') return '&quot;';
+    return '&#39;';
   });
 }
 
@@ -223,7 +271,7 @@ async function loadStaffModularContent(memberFolder, element) {
             const fullMd = await resp.text();
             const modalBody = document.getElementById('mdModalBody');
             if (modalBody) {
-              modalBody.innerHTML = md(fullMd);
+              modalBody.innerHTML = md(fullMd, resp.url);
               const modalTitle = document.getElementById('mdModalLabel');
               if (modalTitle) modalTitle.innerText = getTitle(fullMd);
               const modal = new bootstrap.Modal(document.getElementById('mdModal'));

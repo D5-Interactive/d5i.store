@@ -1,0 +1,6 @@
+# Private roster data — contains Discord handles, intentionally never published.
+# The whole repo is served as the public site by GitHub Pages, so this file must
+# stay untracked. It is the working copy only.
+src/staff/_roster.local.json
+
+.DS_Store
