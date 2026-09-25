@@ -5,5 +5,8 @@
 
 Short description. What it does, who it's for, why it exists.
 
-- [Repository](https://github.com/d5io/product-name)
-- [Documentation](https://docs.d5.io/product-name)
+- Deliverable one
+- Deliverable two
+
+Add a Repository or Documentation link only if the URL resolves for an
+anonymous visitor. A link to a private repository shows a 404 on the site.

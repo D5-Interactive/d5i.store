@@ -1,33 +1,16 @@
-/* signup.js — StarSec competition team signup.
- *
- * The whole form is generated from the FIELDS array below. To add, edit or
- * remove a question, change that array and nothing else.
- *
- *   key        machine name, used in the submitted text. Must be unique.
- *   label      what the visitor sees
- *   type       text | email | tel | url | select | textarea
- *   required   true blocks submission when empty
- *   options    required for type:'select' — list of choices
- *   placeholder / hint   optional helper text
- *   pattern    optional RegExp source string for extra validation
- *   width      'full' | 'half' — half puts two fields side by side
- *
- * Submissions are sent to CONFIG.email. If you would rather collect them
- * in a database, set CONFIG.endpoint to a Formspree / Web3Forms URL and the
- * form will POST to it instead of opening a mail client.
- */
+
 
 (function () {
   'use strict';
 
   var CONFIG = {
     email: 'd5int.sp@gmail.com',
-    // e.g. 'https://formspree.io/f/xxxx' — leave '' to use mailto:
+
     endpoint: '',
-    subject: 'StarSec signup — Rowdy CyberCon, Nov 6-7 2026',
-    // Shown in the confirmation panel
+    subject: 'StarSec signup: Rowdy CyberCon, Nov 6-7 2026',
+
     thanks: "You're on the list.",
-    /* Validates a UTSA address. Set to null to allow any email domain. */
+
     emailDomain: '@utsa.edu'
   };
 
@@ -48,7 +31,7 @@
     { key: 'github', label: 'GitHub account', type: 'text', width: 'half',
       placeholder: 'your username' },
     { key: 'notes', label: 'Notes / anything else', type: 'textarea', width: 'full',
-      placeholder: 'Arrival time, accessibility needs, teammates, questions…' }
+      placeholder: 'Arrival time, accessibility needs, teammates, questions...' }
   ];
 
   function esc(s) {
@@ -75,7 +58,7 @@
     var ctl;
 
     if (f.type === 'select') {
-      var opts = '<option value="">— select —</option>' +
+      var opts = '<option value="">Select...</option>' +
         (f.options || []).map(function (o) {
           return '<option value="' + esc(o) + '">' + esc(o) + '</option>';
         }).join('');
@@ -105,7 +88,7 @@
     }
     if (f.pattern) {
       try { if (!new RegExp(f.pattern).test(v)) return f.hint || 'Check this value.'; }
-      catch (e) { /* bad pattern in config: don't block the visitor */ }
+      catch (e) {  }
     }
     return '';
   }
@@ -129,7 +112,6 @@
     return { values: values, errors: errors, firstBad: firstBad };
   }
 
-  /* Human-readable body, so the inbox is readable without extra parsing. */
   function compose(fields, values) {
     var lines = [];
     fields.forEach(function (f) {
@@ -137,7 +119,7 @@
       lines.push(f.label + ': ' + (v || '(not given)'));
     });
     lines.push('');
-    lines.push('— sent from ' + window.location.href);
+    lines.push('Sent from ' + window.location.href);
     return lines.join('\n');
   }
 
@@ -199,7 +181,7 @@
         status.textContent = 'Sent. Thanks!';
         finish(values);
       }).catch(function (err) {
-        status.textContent = 'Could not send (' + err.message + '). Use “Copy instead”.';
+        status.textContent = 'Could not send (' + err.message + '). Use "Copy instead".';
       });
     }
 
@@ -250,7 +232,6 @@
       if (first) first.focus();
     });
 
-    // Clear a field's error as soon as it becomes valid again.
     form.addEventListener('input', function (e) {
       var wrap = e.target.closest ? e.target.closest('.sf-field') : null;
       if (!wrap) return;
@@ -264,7 +245,6 @@
     });
   }
 
-  /* Older browsers, and the case where clipboard permission is denied. */
   function fallbackCopy(text, statusEl, done) {
     var ta = document.createElement('textarea');
     ta.value = text;
@@ -278,7 +258,7 @@
     document.body.removeChild(ta);
     if (ok) { done(); }
     else {
-      statusEl.textContent = 'Copy failed — select the text below and copy it manually.';
+      statusEl.textContent = 'Copy failed. Select the text below and copy it manually.';
       var pre = document.createElement('pre');
       pre.className = 'sf-raw';
       pre.textContent = text;

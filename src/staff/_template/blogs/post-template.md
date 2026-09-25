@@ -4,7 +4,7 @@
 
 ![Cover image](bin/cover.jpg)
 
-Opening paragraph — what this post is about and why it matters.
+Opening paragraph: what this post is about and why it matters.
 
 Body continues here. Use `- ` for bullet lists and `**text**` for bold.
 

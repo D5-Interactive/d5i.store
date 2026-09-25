@@ -1,8 +1,4 @@
-/* load.js — complete version with preview cards and modal */
 
-/* Resolve a path found in a markdown file against that file's own URL, so
-   `bin/headshot.jpg` inside src/staff/Jane/Jane.md renders correctly even
-   though the page injecting it lives in a different directory. */
 function resolveAsset(path, baseUrl) {
   if (!path || !baseUrl) return path;
   try { return new URL(path, baseUrl).href; } catch (e) { return path; }
@@ -41,11 +37,6 @@ function md(raw, baseUrl) {
   if (list) out += '</ul>';
   return out;
 }
-
-/* ── Initials avatar ──────────────────────────────────────────────────
-   Drawn locally as an inline SVG so a member without a headshot never
-   costs a third-party image request. Shade is derived from the name so
-   the grid reads as varied rather than a wall of identical grey. */
 function initialsOf(name) {
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return '?';
@@ -65,8 +56,7 @@ function initialsAvatar(name, size) {
     + `<text x="50" y="50" fill="${fg}" font-family="Courier New,Courier,monospace" `
     + `font-size="38" font-weight="700" text-anchor="middle" dominant-baseline="central">`
     + `${initials}</text></svg>`;
-  // Apostrophes survive encodeURIComponent, which would break the inline
-  // onerror handlers that embed this string in a quoted attribute.
+
   return 'data:image/svg+xml;charset=utf-8,'
     + encodeURIComponent(svg).replace(/'/g, '%27');
 }
@@ -78,17 +68,13 @@ function extractStaffMetadata(mdText, mdUrl) {
   const headshot = imgMatch ? resolveAsset(imgMatch[1], mdUrl) : '';
   const roleMatch = mdText.match(/\*\*Position:\*\*\s*(.+)/);
   const teamsMatch = mdText.match(/\*\*Teams:\*\*\s*(.+)/);
-  // Cards lead with Position, falling back to the member's team list.
+
   const role = (roleMatch ? roleMatch[1].trim() : '') || (teamsMatch ? teamsMatch[1].trim() : '');
   const teams = teamsMatch
     ? teamsMatch[1].split(',').map(s => s.trim()).filter(Boolean)
     : [];
   return { headshot, name, role, teams, initials: initialsAvatar(name) };
 }
-
-/* "Walker_Caskey" -> "Walker Caskey". The manifest already names every
-   member folder, so the grid can be drawn from that alone before a single
-   markdown file is fetched. */
 function nameFromSlug(slug) {
   return String(slug).replace(/_/g, ' ').trim();
 }
@@ -125,19 +111,12 @@ async function loadStaffIndex(manifestPath, basePath, element) {
       if (countEl) countEl.textContent = `${items.length} entries`;
     };
 
-    /* First paint, immediately, from the manifest alone. Under a normal
-       connection this puts names on screen in about a tenth of a second
-       instead of leaving a blank "loading..." for the best part of a second
-       while 24 files come back. */
     paint(files.map(f => {
       const memberSlug = f.includes('/') ? f.split('/')[0] : f.replace(/\.md$/i, '');
       const name = nameFromSlug(memberSlug);
       return { memberSlug, name, pending: true };
     }));
 
-    /* Second paint, once the real metadata has arrived. Fetched in parallel:
-       sequentially it was 24 round trips, which cost ~3.5s on a normal
-       connection — nearly all latency, not payload. */
     const results = await Promise.all(files.map(async (f) => {
       try {
         const r = await fetch(basePath + f);
@@ -152,7 +131,7 @@ async function loadStaffIndex(manifestPath, basePath, element) {
     }));
     paint(results.filter(Boolean));
   } catch (err) {
-    element.innerHTML = `<div class="alert alert-danger p-3">✗ failed to load: ${err.message}</div>`;
+    element.innerHTML = `<div class="alert alert-danger p-3">Failed to load: ${err.message}</div>`;
     console.error(err);
   }
 }
@@ -162,7 +141,7 @@ async function loadCards(manifestPath, basePath, element) {
     const resp = await fetch(manifestPath);
     if (!resp.ok) throw new Error(`manifest ${resp.status}`);
     const files = await resp.json();
-    /* Parallel, for the same reason as loadStaffIndex. */
+
     const results = await Promise.all(files.map(async (f) => {
       try {
         const r = await fetch(basePath + f);
@@ -171,7 +150,7 @@ async function loadCards(manifestPath, basePath, element) {
         return { file: f, html: md(text, r.url) };
       } catch (e) {
         console.warn(`failed ${f}:`, e);
-        return { file: f, html: `<div class="alert alert-danger p-2 small">⚠️ could not load ${f}</div>` };
+        return { file: f, html: `<div class="alert alert-danger p-2 small">Could not load ${f}</div>` };
       }
     }));
     const items = results;
@@ -189,7 +168,7 @@ async function loadCards(manifestPath, basePath, element) {
     const countEl = element.closest('.container')?.querySelector('.page-count');
     if (countEl) countEl.textContent = `${items.length} entries`;
   } catch (err) {
-    element.innerHTML = `<div class="alert alert-danger p-3">✗ failed to load: ${err.message}</div>`;
+    element.innerHTML = `<div class="alert alert-danger p-3">Failed to load: ${err.message}</div>`;
     console.error(err);
   }
 }
@@ -228,11 +207,9 @@ function getPreviewDescription(mdText, maxLength = 120) {
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/^\s*\n/gm, '')
     .trim();
-  if (plain.length > maxLength) plain = plain.slice(0, maxLength) + '…';
+  if (plain.length > maxLength) plain = plain.slice(0, maxLength) + '...';
   return plain || 'No description';
 }
-
-const sectionIcons = { products: '📦', blogs: '📝', research: '🔬' };
 
 async function loadStaffModularContent(memberFolder, element) {
   const sections = ['products', 'blogs', 'research'];
@@ -254,7 +231,6 @@ async function loadStaffModularContent(memberFolder, element) {
             title: getTitle(fullMd),
             description: getPreviewDescription(fullMd),
             filePath: basePath + f,
-            icon: sectionIcons[section] || '📄'
           };
         } catch (e) { console.warn(`Failed ${section}/${f}:`, e); return null; }
       }))).filter(Boolean);
@@ -267,8 +243,7 @@ async function loadStaffModularContent(memberFolder, element) {
               <div class="card preview-card border border-dark rounded-0 h-100" data-filepath="${escapeHtml(item.filePath)}" style="cursor:pointer;">
                 <div class="card-body">
                   <div class="d-flex align-items-center mb-2">
-                    <span class="fs-3 me-2">${item.icon}</span>
-                    <h5 class="card-title fw-bold mb-0">${escapeHtml(item.title)}</h5>
+                                        <h5 class="card-title fw-bold mb-0">${escapeHtml(item.title)}</h5>
                   </div>
                   <p class="card-text small text-muted">${escapeHtml(item.description)}</p>
                 </div>
@@ -282,7 +257,7 @@ async function loadStaffModularContent(memberFolder, element) {
   }
   if (html) {
     element.insertAdjacentHTML('beforeend', html);
-    // Attach modal click handlers
+
     document.querySelectorAll('.preview-card').forEach(card => {
       card.addEventListener('click', async (e) => {
         const filePath = card.getAttribute('data-filepath');
