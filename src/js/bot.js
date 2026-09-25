@@ -66,6 +66,12 @@
       say: "We do two things: architecture and security consulting, and full end-to-end product development. Rates are on request and we keep a limited number of slots open.",
       link: { text: 'See services', href: BASE + 'src/pages/SERVICES.html' } },
 
+    // Signup questions must be tested before the product rule, since both
+    // match on "starsec" and the visitor almost always means the event.
+    { re: /\b(sign ?up|signing|register|registration|compete|competing|competition|comp|tournament|showcase|rowdy|cyber ?con|cybercon|cyber jedis|jedis|captain|operator|nov(ember)? 7)\b/i,
+      say: "StarSec is running a cyber competition showcase at Rowdy CyberCon on November 7, 2026. The signup form is short — name, the role you want (Captain or Operator), experience level, and your details. It lands in a real inbox.",
+      link: { text: 'Open the signup form', href: BASE + 'src/pages/STARSEC-SIGNUP.html' } },
+
     { re: /\b(product|products|tool|tools|ship|thing(s)? you (made|build)|starsec|dbgc|star sec|debug commander|cli)\b/i,
       say: "We ship a few things: StarSec, a simulated cyber-warfare range built on real shells and services, and DBGC, our debugging commander tool. There are more in the works.",
       link: { text: 'See products', href: BASE + 'src/pages/PRODUCTS.html' } },

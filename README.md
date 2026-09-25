@@ -40,6 +40,27 @@ Copy the `_template` from `services/`, `products/`, or `staff/`. Name the folder
   `**University:**`. `Position` is shown on the card; if absent, `Teams` is used instead.
   `Teams` renders as chips and is comma-separated.
 
+## StarSec signup
+
+`src/pages/STARSEC-SIGNUP.html` is the competition signup for StarSec at Rowdy
+CyberCon (November 7, 2026). It is a per-person form: each entrant signs up once
+and picks Captain or Operator.
+
+**To add, edit or remove a question, change only the `FIELDS` array at the top of
+`src/js/signup.js`.** The page, the labels, the validation and the submitted email
+are all generated from it. Each entry supports `key`, `label`, `type`
+(`text` / `email` / `tel` / `url` / `select` / `textarea`), `required`, `options`,
+`placeholder`, `hint`, `pattern` (RegExp source) and `width` (`half` / `full`).
+
+Submissions go to `CONFIG.email` in `src/js/signup.js`. Out of the box it opens a
+pre-filled email via `mailto:`. To collect responses in a database instead, set
+`CONFIG.endpoint` to a Formspree or Web3Forms URL and the form will `POST` to it
+instead — no other change needed. There is still a "Copy instead" button, which is
+the fallback for anyone whose device has no mail client configured.
+
+UTSA addresses are validated to end in `@utsa.edu`; set `CONFIG.emailDomain` to
+`null` to accept any domain.
+
 ## D5-DOG
 
 The help assistant in the bottom-right corner. Click the dog for the bark.
