@@ -12,10 +12,12 @@
 
   var CONFIG = {
     email: 'd5int.sp@gmail.com',
-    volume: 0.35,
+    // d5dog.mp3 is normalised to -2 dBTP, so full volume is the intended
+    // level. Drop this to ~0.5 for a more discreet bark.
+    volume: 1.0,
     panelTitle: 'D5Bot',
     openGreeting:
-      "Woof! I'm D5Bot. I can help you find someone, or pass a message straight to the team. What do you need?",
+      "D5-DOG: Hi! I can help you find someone, or pass a message straight to the team. What do you need?",
     fallback:
       "I don't have an answer for that one, sorry. I can pass it to a human though — hit the button below and it'll come pre-filled."
   };
