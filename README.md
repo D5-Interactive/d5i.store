@@ -81,8 +81,8 @@ pre-filled email via `mailto:`. To collect responses in a database instead, set
 instead, with no other change. There is still a "Copy instead" button, which is
 the fallback for anyone whose device has no mail client configured.
 
-UTSA addresses are validated to end in `@utsa.edu`; set `CONFIG.emailDomain` to
-`null` to accept any domain.
+Any email address is accepted (`@utsa.edu`, `gmail.com`, or any other domain);
+only the generic `user@host.tld` shape is checked.
 
 ## D5-DOG "where is X?" lookup
 

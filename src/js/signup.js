@@ -9,9 +9,7 @@
     endpoint: '',
     subject: 'StarSec signup: Rowdy CyberCon, Nov 6-7 2026',
 
-    thanks: "You're on the list.",
-
-    emailDomain: '@utsa.edu'
+    thanks: "You're on the list."
   };
 
   var FIELDS = [
@@ -22,8 +20,8 @@
       options: ['Beginner', 'Intermediate', 'Advanced'] },
     { key: 'jedis', label: 'Are you a member of Cyber Jedis?', type: 'select', required: true, width: 'half',
       options: ['Yes', 'No'] },
-    { key: 'utsaEmail', label: 'UTSA email', type: 'email', required: true, width: 'half',
-      placeholder: 'abc123@utsa.edu', autocomplete: 'email' },
+    { key: 'utsaEmail', label: 'Email', type: 'email', required: true, width: 'half',
+      placeholder: 'you@example.com', autocomplete: 'email' },
     { key: 'utsaId', label: 'UTSA ID', type: 'text', required: true, width: 'half',
       placeholder: 'ABC123' },
     { key: 'discord', label: 'Discord', type: 'text', width: 'half',
@@ -82,10 +80,6 @@
     if (f.required && !v) return 'This field is required.';
     if (!v) return '';
     if (f.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'That does not look like an email address.';
-    if (CONFIG.emailDomain && f.key === 'utsaEmail' &&
-        v.toLowerCase().slice(-CONFIG.emailDomain.length) !== CONFIG.emailDomain) {
-      return 'Use your UTSA address, which ends in ' + CONFIG.emailDomain + '.';
-    }
     if (f.pattern) {
       try { if (!new RegExp(f.pattern).test(v)) return f.hint || 'Check this value.'; }
       catch (e) {  }
