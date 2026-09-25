@@ -68,8 +68,12 @@
 
     // Signup questions must be tested before the product rule, since both
     // match on "starsec" and the visitor almost always means the event.
+    { re: /\b(where|venue|location|address|where is|where'?s|how do i (get|find)|directions|which campus|downtown|san ?pedro|sp1|weston)\b/i,
+      say: "It's at the Weston Conference Center on the UTSA Downtown Campus, in SP1 (San Pedro 1). The signup form has a Maps link so you can route to it.",
+      link: { text: 'See venue and sign up', href: BASE + 'src/pages/STARSEC-SIGNUP.html' } },
+
     { re: /\b(sign ?up|signing|register|registration|compete|competing|competition|comp|tournament|showcase|rowdy|cyber ?con|cybercon|cyber jedis|jedis|captain|operator|nov(ember)? 7)\b/i,
-      say: "StarSec is running a cyber competition showcase at Rowdy CyberCon on November 7, 2026. The signup form is short — name, the role you want (Captain or Operator), experience level, and your details. It lands in a real inbox.",
+      say: "StarSec is running a cyber competition showcase at Rowdy CyberCon on November 7, 2026, at the Weston Conference Center on the UTSA Downtown Campus (SP1 / San Pedro 1). The signup form is short — name, the role you want (Captain or Operator), experience level, and your details. It lands in a real inbox.",
       link: { text: 'Open the signup form', href: BASE + 'src/pages/STARSEC-SIGNUP.html' } },
 
     { re: /\b(product|products|tool|tools|ship|thing(s)? you (made|build)|starsec|dbgc|star sec|debug commander|cli)\b/i,
