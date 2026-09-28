@@ -1,4 +1,3 @@
-!\[Danica Kim](bin/headshot.jpg)
 
 # Danica Kim
 
