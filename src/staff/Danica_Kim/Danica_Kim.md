@@ -1,8 +1,8 @@
-!\[Full Name](bin/headshot.jpg)
+!\[Danica Kim](bin/headshot.jpg)
 
 # Danica Kim
 
-**Team:** Security
+**Teams:** Security
 **GitHub:** dayalight
 **University:** UTSA, Undergrad, Computer Science
 
