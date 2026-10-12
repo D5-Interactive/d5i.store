@@ -136,35 +136,69 @@ async function loadStaffIndex(manifestPath, basePath, element) {
   }
 }
 
+function openMdModal(title, html) {
+  let modalEl = document.getElementById('mdModal');
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.className = 'modal fade';
+    modalEl.id = 'mdModal';
+    modalEl.tabIndex = -1;
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.innerHTML = `
+      <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content rounded-0">
+          <div class="modal-header border-0">
+            <h5 class="modal-title" id="mdModalLabel">Content</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="mdModalBody"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modalEl);
+  }
+  document.getElementById('mdModalLabel').textContent = title;
+  document.getElementById('mdModalBody').innerHTML = html;
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
 async function loadCards(manifestPath, basePath, element) {
   try {
     const resp = await fetch(manifestPath);
     if (!resp.ok) throw new Error(`manifest ${resp.status}`);
     const files = await resp.json();
 
-    const results = await Promise.all(files.map(async (f) => {
+    const items = await Promise.all(files.map(async (f) => {
       try {
         const r = await fetch(basePath + f);
         if (!r.ok) throw new Error(`missing ${f}`);
         const text = await r.text();
-        return { file: f, html: md(text, r.url) };
+        return { title: getTitle(text), preview: getPreviewDescription(text, 180), html: md(text, r.url) };
       } catch (e) {
         console.warn(`failed ${f}:`, e);
-        return { file: f, html: `<div class="alert alert-danger p-2 small">Could not load ${f}</div>` };
+        return { title: f, preview: 'Could not load this entry.', html: `<div class="alert alert-danger p-2 small">Could not load ${f}</div>` };
       }
     }));
-    const items = results;
+
     element.innerHTML = `
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        ${items.map(item => `
+        ${items.map((item, i) => `
           <div class="col">
-            <div class="card h-100 border-0 shadow-none p-3" style="border:1px solid #000 !important; border-radius:0">
-              ${item.html}
-            </div>
+            <button type="button" class="product-card" data-idx="${i}">
+              <span class="product-card-title">${escapeHtml(item.title)}</span>
+              <span class="product-card-preview">${escapeHtml(item.preview)}</span>
+              <span class="product-card-open">Read more &rarr;</span>
+            </button>
           </div>
         `).join('')}
       </div>
     `;
+    element.querySelectorAll('.product-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const item = items[Number(card.dataset.idx)];
+        openMdModal(item.title, item.html);
+      });
+    });
+
     const countEl = element.closest('.container')?.querySelector('.page-count');
     if (countEl) countEl.textContent = `${items.length} entries`;
   } catch (err) {
