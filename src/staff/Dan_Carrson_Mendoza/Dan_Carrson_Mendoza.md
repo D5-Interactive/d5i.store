@@ -1,5 +1,5 @@
 # Dan Carrson Mendoza
-**Position:** Security Member
+**Teams:** Security Member
 **Skills / Focus:** Software Engineering, Cybersecurity, Python/Bash Scripting, Linux
 **University:** University of Texas at San Antonio (UTSA)  
 **Major:** Computer Science: Cyber Operations Track - Undergraduate
@@ -7,6 +7,7 @@
 
 **GitHub:** DnCrMn
 
+<br>
 ## Bio
 
 I am a Computer Science student at UTSA with a passion for software development, problem-solving, and building practical applications. 
